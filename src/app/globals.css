@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/*
+ * Northwind Coffee Co. design tokens — values from Cindy's design-system v1
+ * (design/02-design-system.md). Single source of truth; components reference
+ * these via Tailwind color utilities (bg-roast, text-amber, etc.).
+ */
+:root {
+  --espresso: #2a1a12;
+  --roast: #4a2c1a;
+  --amber: #c8772e;
+  --amber-hover: #a85f20;
+  --crema: #f6efe3;
+  --oat: #eadfce;
+  --cream: #fffdf8;
+  --ink: #1c1410;
+  --muted: #6b5a4c;
+  --success: #2f7d4f;
+  --error: #b3261e;
+
+  --background: var(--crema);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-espresso: var(--espresso);
+  --color-roast: var(--roast);
+  --color-amber: var(--amber);
+  --color-amber-hover: var(--amber-hover);
+  --color-crema: var(--crema);
+  --color-oat: var(--oat);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+/* Visible keyboard focus everywhere (WCAG 2.2 AA — 2px amber). */
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
