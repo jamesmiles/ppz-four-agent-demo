@@ -48,16 +48,23 @@ async function addFirstProductToCart(page: Page) {
   return productName;
 }
 
+// Fill an optional field only if it exists (required-set = Option A; extras vary).
+async function fillIfPresent(page: Page, testId: string, value: string) {
+  const loc = page.locator(id(testId));
+  if (await loc.count()) await loc.fill(value);
+}
+
 async function fillCheckout(page: Page, email = 'shopper@test.com', card = GOOD_CARD) {
+  // Required (Option A)
   await page.locator(id('checkout-email')).fill(email);
   await page.locator(id('checkout-name')).fill('Test Shopper');
   await page.locator(id('checkout-address1')).fill('1 Roastery Way');
-  await page.locator(id('checkout-city')).fill('Beanton');
-  await page.locator(id('checkout-postcode')).fill('BN1 2CD');
-  // country/region may be selects with sensible defaults; fill if present.
   await page.locator(id('checkout-card-number')).fill(card);
   await page.locator(id('checkout-card-expiry')).fill('12/30');
   await page.locator(id('checkout-card-cvc')).fill('123');
+  // Optional extras — fill if Bob rendered them, skip otherwise.
+  await fillIfPresent(page, 'checkout-city', 'Beanton');
+  await fillIfPresent(page, 'checkout-postcode', 'BN1 2CD');
 }
 
 test.describe('golden path: browse → cart → checkout', () => {
