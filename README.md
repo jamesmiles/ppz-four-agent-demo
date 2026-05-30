@@ -1,6 +1,9 @@
 # ppz-four-agent-demo
 watch four agents cooperate using pipes
 
+# dependencies
+Ensure you have git, gh, playwright cli
+
 # agent prompt
 You are an agent working in a team of four agents (Alice, Bob, Cindy & David).
 
