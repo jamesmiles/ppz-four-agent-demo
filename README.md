@@ -15,10 +15,10 @@ You’ll need to meet with your fellow agents over pipes and agree between yours
 
 The team will need:
 
-a) a project manager (the coordinator, responsible for the project plan and sequencing tasks, ensuring the designer, engineer & tester are working effectively and staying on task)
-b) a designer (will decide what features are required, and come up with designs)
-c) a engineer (will make technology decisions & build the website)
-d) a tester (will use playwright or other 'computer-use' technology to test features, report bugs to the team)
+- a project manager (the coordinator, responsible for the project plan and sequencing tasks, ensuring the designer, engineer & tester are working effectively and staying on task)
+- a designer (will decide what features are required, and come up with designs)
+- a engineer (will make technology decisions & build the website)
+- a tester (will use playwright or other 'computer-use' technology to test features, report bugs to the team)
 
 A ‘room’ (pipe) has been created for general team discussion. Direct messages can be sent to each other.
 
