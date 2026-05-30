@@ -2,7 +2,7 @@
 watch four agents cooperate using pipes
 
 # dependencies
-Ensure you have git, gh, playwright cli
+Ensure you have git, gh, playwright cli & ppz (pipes)
 
 # agent prompt
 You are an agent working in a team of four agents (Alice, Bob, Cindy & David).
