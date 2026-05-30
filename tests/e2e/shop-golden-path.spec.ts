@@ -12,13 +12,14 @@ import { test, expect, Page } from '@playwright/test';
  * harness stays green on main. Auto-activate once Bob's routes land.
  * Run against a deploy:  TEST_AGAINST_DEPLOY=1 BASE_URL=https://<preview> npm test shop-golden
  *
- * Test-safe submit (Bob): NEXT_PUBLIC_TEST_MODE=1 → mock handler, no real payment/email.
- * Error sentinel (decided): declined card 4000000000000002, everything else valid.
+ * Test-safe submit (Bob): NEXT_PUBLIC_TEST_MODE=1 (or ?test=1) → mock handler.
+ * Error sentinel (Bob's canonical call): email 'fail@test.com' → declined.
+ * Card 4000000000000002 is accepted as a secondary trigger but email is canonical.
  */
 
 const id = (testId: string) => `[data-testid="${testId}"]`;
 const GOOD_CARD = '4242424242424242';
-const DECLINED_CARD = '4000000000000002';
+const DECLINE_EMAIL = 'fail@test.com';
 
 // Skip the whole file if the shop route isn't up yet.
 test.beforeEach(async ({ page }) => {
@@ -47,8 +48,8 @@ async function addFirstProductToCart(page: Page) {
   return productName;
 }
 
-async function fillValidCheckoutExceptCard(page: Page, card: string) {
-  await page.locator(id('checkout-email')).fill('shopper@test.com');
+async function fillCheckout(page: Page, email = 'shopper@test.com', card = GOOD_CARD) {
+  await page.locator(id('checkout-email')).fill(email);
   await page.locator(id('checkout-name')).fill('Test Shopper');
   await page.locator(id('checkout-address1')).fill('1 Roastery Way');
   await page.locator(id('checkout-city')).fill('Beanton');
@@ -72,7 +73,7 @@ test.describe('golden path: browse → cart → checkout', () => {
     await page.locator(id('cart-checkout-button')).click();
     await expect(page.locator(id('checkout-form'))).toBeVisible();
 
-    await fillValidCheckoutExceptCard(page, GOOD_CARD);
+    await fillCheckout(page);
     await page.locator(id('checkout-place-order')).click();
 
     // Confirmation
@@ -105,7 +106,8 @@ test.describe('golden path: browse → cart → checkout', () => {
     await page.locator(id('nav-cart-button')).click();
     await page.locator(id('cart-checkout-button')).click();
 
-    await fillValidCheckoutExceptCard(page, DECLINED_CARD);
+    // Canonical decline trigger: sentinel email (Bob), everything else valid.
+    await fillCheckout(page, DECLINE_EMAIL);
     await page.locator(id('checkout-place-order')).click();
 
     const banner = page.locator(id('checkout-form-error'));
@@ -113,6 +115,6 @@ test.describe('golden path: browse → cart → checkout', () => {
     await expect(banner).toHaveText(/declined/i);
     await expect(page).not.toHaveURL(/\/checkout\/success/);
     // Values retained (Cindy state #4)
-    await expect(page.locator(id('checkout-email'))).toHaveValue('shopper@test.com');
+    await expect(page.locator(id('checkout-email'))).toHaveValue(DECLINE_EMAIL);
   });
 });

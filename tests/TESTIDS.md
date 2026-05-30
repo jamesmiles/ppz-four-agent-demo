@@ -94,11 +94,11 @@ Fields: `checkout-email`, `checkout-name`, `checkout-address1`, `checkout-addres
 ## Test-safe submit + error sentinel — **DECIDED**
 - Test mode: `NEXT_PUBLIC_TEST_MODE=1` (or `?test=1`) → forms POST to a mock handler,
   no real email/payment/analytics, deterministic responses.
-- **Error sentinel (canonical): declined card number `4000 0000 0000 0002`.**
-  Chosen over `?test=fail` because it isolates the failure to the *payment* step with
-  everything else valid — a truer error-path assertion, and a card devs recognise.
-  `?test=fail` is fine as a secondary hook but the card is what my spec uses.
-- Success path uses card `4242 4242 4242 4242`, valid expiry/cvc, real-looking address.
+- **Error sentinel (canonical, Bob's call): email `fail@test.com` → declined.**
+  My spec uses this. Card `4000 0000 0000 0002` is accepted as a *secondary* trigger
+  but the email is canonical (zero churn — matches Bob's wiring).
+- Success path uses email `shopper@test.com`, card `4242 4242 4242 4242`, valid
+  expiry/cvc, real-looking address.
 
 ## Form states I assert (per Cindy's `04-testability.md`)
 1. Empty submit → every required `checkout-error-<field>` + `checkout-form-error`, no nav.
