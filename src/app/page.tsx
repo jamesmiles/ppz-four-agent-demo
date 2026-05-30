@@ -10,7 +10,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-roast text-cream">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28">
-          <p className="text-sm uppercase tracking-widest text-amber">
+          <p className="text-sm uppercase tracking-widest text-amber-on-dark">
             Small-batch · Roasted to order
           </p>
           <h1 className="mt-4 max-w-2xl text-4xl font-semibold leading-tight sm:text-5xl">

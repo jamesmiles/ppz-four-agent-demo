@@ -9,7 +9,8 @@
   --espresso: #2a1a12;
   --roast: #4a2c1a;
   --amber: #c8772e;
-  --amber-hover: #a85f20;
+  --amber-hover: #9a5418; /* darkened from #a85f20 → 5.0:1 on crema (WCAG AA) */
+  --amber-on-dark: #e09a55; /* lighter amber for small text on dark surfaces → 5.4:1 on roast */
   --crema: #f6efe3;
   --oat: #eadfce;
   --cream: #fffdf8;
@@ -29,6 +30,7 @@
   --color-roast: var(--roast);
   --color-amber: var(--amber);
   --color-amber-hover: var(--amber-hover);
+  --color-amber-on-dark: var(--amber-on-dark);
   --color-crema: var(--crema);
   --color-oat: var(--oat);
   --color-cream: var(--cream);

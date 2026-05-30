@@ -6,7 +6,7 @@ export default function NotFound() {
       className="mx-auto flex max-w-6xl flex-col items-center px-4 py-28 text-center"
       data-testid="not-found"
     >
-      <p className="text-sm uppercase tracking-widest text-amber">404</p>
+      <p className="text-sm uppercase tracking-widest text-amber-hover">404</p>
       <h1 className="mt-3 text-3xl font-semibold text-roast">
         This page has gone cold.
       </h1>
