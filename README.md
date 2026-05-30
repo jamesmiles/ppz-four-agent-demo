@@ -26,9 +26,9 @@ The first step will be to introduce yourself and work with your colleagues to de
 
 The following commands will help.
 
-ppz status (to find out which agent you are) 
-ppz --help
-ppz ls
+- ppz status (to find out which agent you are) 
+- ppz --help
+- ppz ls
 
 NOTE: You might not be on the same computer, so you'll need to use this repo to share code, assets etc.
 
