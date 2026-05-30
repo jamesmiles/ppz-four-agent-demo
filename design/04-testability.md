@@ -1,67 +1,63 @@
-# Northwind Coffee Co. — Testability & Form States (v1)
+# Northwind Coffee Co. — Form/UI States (designer annotations)
 
 **Author:** Cindy (Designer) · For: David (Test) + Bob (build).
 
-> **Source-of-truth note:** David owns the **canonical `data-testid` registry** in `tests/` (his PR #2). The IDs below are my *proposed* hooks following his scheme `data-testid="<area>-<element>[-<variant>]"` — David, please fold/rename into your canonical list and I'll match. I own the **UX states** (what each happy/error state looks like); Bob implements; David asserts.
+> **Canonical selectors live in David's `tests/TESTIDS.md` (PR #2) — that file is the single source of truth for `data-testid`s.** I do **not** redefine IDs here. This doc supplies what David asked for: the **exact expected copy + behaviour** for every error / empty / success state, keyed to his canonical testids, so Bob implements and David asserts identical strings. Error sentinel agreed = **email `fail@test.com`** (forces declined). Test-safe mode = `NEXT_PUBLIC_TEST_MODE=1` / `?test=1`.
 
-## Test-safe mode (agreed)
-Bob exposes test mode via `NEXT_PUBLIC_TEST_MODE=1` or `?test=1`: forms POST to a mock handler — no real email/payment/analytics — returning **deterministic** success/error. Trigger the error path with a sentinel (proposed: card number `4000 0000 0000 0002` → declined; or `?test=fail`). David to confirm which sentinel he wires.
+## Golden happy path (maps to David's ids)
+`/shop` → `shop-card-link` (nth) → PDP → `pdp-grind-select` → `pdp-add-to-cart` → assert `pdp-added-toast` + `nav-cart-count`="1" → `nav-cart` → `/cart` → assert `cart-subtotal` → `cart-checkout-cta` → `/checkout` → fill `checkout-email`/`checkout-name`/`checkout-address`/`checkout-card` valid → `checkout-submit` → `/checkout/success` → assert `confirmation-heading` + `confirmation-order-id` matches `/^NW-\d{4,}$/`.
 
-## Proposed `data-testid` hooks by area
-**Nav/global**
-`nav-link-shop`, `nav-link-subscriptions`, `nav-link-about`, `nav-cart-button`, `nav-cart-count`, `nav-search-button`, `nav-mobile-toggle`
+## Checkout states — exact copy & behaviour
 
-**Shop**
-`shop-filter-roast-<light|medium|dark>`, `shop-filter-origin-<slug>`, `shop-filter-grind-<slug>`, `shop-filter-clear`, `shop-grid`, `shop-empty`, `product-card-<slug>`, `product-card-add-<slug>`
+**Required fields:** email, name, address, card (all present in `checkout-form`).
 
-**Product detail (PDP)**
-`pdp-title`, `pdp-price`, `pdp-roast-badge`, `pdp-grind-select`, `pdp-qty-stepper`, `pdp-qty-input`, `pdp-add-to-cart`, `pdp-add-toast`
+### State 1 — empty submit
+Trigger: `checkout-submit` with blank required fields.
+- Each empty required field → `checkout-error-<field>` with copy:
+  - `checkout-error-email`: **"Enter your email address."**
+  - `checkout-error-name`: **"Enter your full name."**
+  - `checkout-error-address`: **"Enter your shipping address."**
+  - `checkout-error-card`: **"Enter your card number."**
+- Field gets red border, `aria-invalid="true"`, `aria-describedby` → its error id.
+- `checkout-error-summary` banner (role="alert"): **"Please fix the highlighted fields."**
+- Focus moves to first invalid field. **No navigation.**
 
-**Cart**
-`cart-line-<slug>`, `cart-line-qty-<slug>`, `cart-line-remove-<slug>`, `cart-subtotal`, `cart-shipping`, `cart-total`, `cart-checkout-button`, `cart-empty`
+### State 2 — per-field format validation (on blur + on submit)
+- Invalid email format → `checkout-error-email`: **"Enter a valid email address."**
+- Card fails length/Luhn → `checkout-error-card`: **"Enter a valid card number."**
+- (If Bob splits expiry/CVC into their own inputs, add `checkout-error-expiry` "Card has expired." / `checkout-error-cvc` "Enter the 3-digit security code." — optional for MVP.)
 
-**Checkout** (the critical form)
-Fields: `checkout-email`, `checkout-name`, `checkout-address1`, `checkout-address2`, `checkout-city`, `checkout-region`, `checkout-postcode`, `checkout-country`, `checkout-phone`, `checkout-card-number`, `checkout-card-expiry`, `checkout-card-cvc`
-Errors (one per field): `checkout-error-<field>` e.g. `checkout-error-email`
-Summary/action: `checkout-summary-total`, `checkout-place-order`, `checkout-form-error` (form-level banner)
+### State 3 — success (valid + test mode)
+- `checkout-submit` → loading/disabled during submit.
+- Navigate to `/checkout/success`; `confirmation-heading` visible: **"Thank you — your order is confirmed."**
+- `confirmation-order-id`: **"Order #NW-####"**. `confirmation-email-note`: **"We've emailed your receipt."** (mocked in test mode).
+- Cart cleared → `nav-cart-count` = "0".
 
-**Confirmation**
-`confirm-banner`, `confirm-order-number`, `confirm-continue`
+### State 4 — declined / server error (sentinel `fail@test.com`)
+- **No navigation.** `checkout-error-summary` (role="alert"): **"Payment declined — please try another card."**
+- Fields retain their values; `checkout-submit` re-enabled. Cart unchanged.
 
-## Golden flow — happy path (David's e2e #1)
-`/shop` → click `product-card-<slug>` → PDP → select grind → `pdp-add-to-cart` → assert `pdp-add-toast` + `nav-cart-count` = 1 → `nav-cart-button` → `/cart` → assert `cart-total` → `cart-checkout-button` → `/checkout` → fill all fields valid → `checkout-place-order` → `/checkout/success` → assert `confirm-banner` + `confirm-order-number` matches `NW-` pattern.
+## Add-to-cart states
+- **Success:** `pdp-added-toast` (role="status") copy **"Added to your cart."** + `nav-cart-count` increments.
+- **Qty bounds:** `pdp-qty` min 1; decrement disabled at 1 (never 0/negative).
 
-## Checkout form STATES (designer spec — implement & assert all four)
-For EACH state, the visual + a11y behaviour is fixed:
+## Cart states
+- **Empty:** `/cart` with no items → `cart-empty` copy **"Your cart is empty."** + "Shop coffee" CTA; no `cart-checkout-cta`.
+- **Populated:** each `cart-line-item` shows name/qty/line-price; `cart-subtotal` updates on qty change; free shipping over $40 (else $5) — show in summary.
 
-1. **Empty submit** — click Place order with blank required fields:
-   - Every required field shows inline error (`checkout-error-<field>`), red border, `aria-invalid="true"`, `aria-describedby` → error id.
-   - Focus moves to first invalid field. Form-level banner `checkout-form-error` = "Please fix the highlighted fields." No navigation.
-2. **Per-field validation** (on blur + on submit):
-   - **email** invalid format → `checkout-error-email` "Enter a valid email."
-   - **postcode** empty → "Postcode is required."
-   - **card-number** wrong length/Luhn → "Enter a valid card number."
-   - **expiry** in the past → "Card has expired."
-   - **cvc** not 3–4 digits → "Enter the 3-digit code."
-3. **Success** (valid + test mode) — `checkout-place-order` shows loading/disabled → navigates to `/checkout/success`; `confirm-banner` visible; cart cleared (`nav-cart-count` = 0).
-4. **Server/declined error** (sentinel card or `?test=fail`) — no navigation; `checkout-form-error` banner = "Payment declined — please try another card." (role="alert"); fields retain values; button re-enabled.
+## Shop filter states
+- **Match:** `shop-grid` updates, count reflects, URL query set (`?roast=dark`).
+- **No match:** `shop-empty` copy **"No coffees match your filters."** + a clear-filters action; `shop-grid` hidden.
 
-## Add-to-cart STATES
-- **Success**: toast `pdp-add-toast` (role="status") + badge increments.
-- **Qty bounds**: stepper min 1; decrement at 1 is disabled, not negative.
-- **Cart empty**: `/cart` with no items → `cart-empty` + Shop CTA (no checkout button).
+## 404
+- `not-found` marker present; copy **"This page got lost on the way to the roastery."** + Home + Shop CTAs.
 
-## Filter STATES (Shop)
-- **Match**: grid updates, count reflects, URL query set.
-- **No match**: `shop-empty` shown, grid hidden, `shop-filter-clear` restores all.
+## A11y assertions (aligns with David's axe pass)
+- axe: 0 serious/critical on every route.
+- Keyboard-only completion of the golden flow; visible amber focus ring throughout.
+- Every `checkout-error-<field>` programmatically tied to its input (`aria-describedby`); summary banners `role="alert"`.
+- One `h1` per page; `footer` + `main`/`nav` landmarks present.
 
-## A11y test expectations (aligns with David's axe pass)
-- axe: 0 serious/critical violations on every route.
-- Keyboard-only: complete the golden flow with Tab/Enter/Space; visible focus throughout.
-- Each form error programmatically associated (`aria-describedby`); form-level banners `role="alert"`.
-- One `h1` per page; landmarks present.
-- David runs axe at 2.1 AA stable ruleset + flags 2.2 gaps (agreed) — design targets 2.2 AA; no silent under-test.
-
-## Open coordination
-- David: confirm the **error sentinel** (declined card vs `?test=fail`) so Bob wires one mechanism.
-- Bob: confirm Subscriptions "Start" stub behaviour (add-to-cart vs "coming soon" modal) — affects whether it needs test hooks now.
+## Reconciliation notes
+- David's contract uses single `checkout-address` + `checkout-card`; my full page spec (`03`) lists granular shipping/payment fields for the visual design. For MVP testing we assert against the canonical ids; Bob can implement granular fields and still expose `checkout-error-<field>` per the above. No conflict — visual richness ≠ extra required test anchors.
+- If any element in David's contract doesn't exist in the design, ping me and we amend the contract together (not guess).
