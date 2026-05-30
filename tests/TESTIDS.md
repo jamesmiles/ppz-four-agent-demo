@@ -35,7 +35,7 @@ keep specific ids.
 | `product-card` | each card *(generic)* — carries `data-slug` |
 | `product-card-name` | name within a card |
 | `product-card-price` | price within a card |
-| `product-card-add` | quick-add button on the card |
+| `product-card-add` | ~~quick-add~~ **N/A** — add-to-cart is PDP-only (locked). Card links to PDP. |
 | `shop-filter-roast` | roast filter (values `light\|medium\|dark` via option/`data-value`) |
 | `shop-filter-origin` | origin filter |
 | `shop-filter-grind` | grind filter |
