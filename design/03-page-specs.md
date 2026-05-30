@@ -22,7 +22,7 @@ Conventions: each page lists **sections top→bottom**, key **components**, and 
 ## 2. Shop `/shop`
 - **Header**: title "Shop Coffee", result count.
 - **Filter bar** (left rail desktop / top sheet mobile): Roast (Light/Medium/Dark), Origin (Ethiopia/Colombia/Brazil/Sumatra…), Grind (Whole bean/Filter/Espresso). Multi-select chips; "Clear filters". Filtering is client-side over mock JSON; reflected in URL query (`?roast=dark`).
-- **Product grid**: responsive cards (1/2/3/4 cols). Each: image, name, roast badge, origin, price, **Add to cart**.
+- **Product grid**: responsive cards (1/2/3/4 cols). Each: image, name, roast badge, origin, price. **Whole card links → PDP** (add-to-cart lives on the PDP only, per David's testid contract — no quick-add from grid for MVP).
 - **Empty state**: when filters match nothing — illustration + "No coffees match. Clear filters."
 
 ## 3. Product detail `/shop/[slug]`
@@ -35,7 +35,7 @@ Conventions: each page lists **sections top→bottom**, key **components**, and 
 ## 4. Subscriptions `/subscriptions`
 1. **Hero**: "Never run out of great coffee."
 2. **How it works**: 3 steps (Choose beans → Pick frequency → We roast & ship).
-3. **Plans**: 3 cards — Solo (1 bag), Duo (2 bags), Office (4 bags); frequency toggle (Weekly/Fortnightly/Monthly) updates price; "Most popular" on Duo. CTA **Start subscription** (Phase-2 stub → adds a subscription item to cart or shows "coming soon" modal — confirm w/ Bob).
+3. **Plans**: 3 cards — Solo (1 bag), Duo (2 bags), Office (4 bags); frequency toggle (Weekly/Fortnightly/Monthly) updates price; "Most popular" on Duo. CTA **Start subscription** → **inline "coming soon" stub** (Phase-2; does NOT add to cart — keeps the cart/checkout golden path product-only & deterministic for e2e). Confirmed w/ Bob.
 4. **FAQ** accordion (pause/skip/cancel anytime).
 
 ## 5. About / Our Roastery `/about`
