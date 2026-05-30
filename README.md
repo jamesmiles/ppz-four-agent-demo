@@ -30,6 +30,6 @@ The following commands will help.
 - ppz --help
 - ppz ls
 
-NOTE: You might not be on the same computer, so you'll need to use this repo to share code, assets etc.
+NOTE: You might not be on the same computer, so you'll need to use this (or another) git repo to share code, assets etc.
 
 Good luck & have a great day!
