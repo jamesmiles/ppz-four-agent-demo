@@ -15,7 +15,8 @@ Roast-inspired, warm neutrals with an amber accent. Contrast checked for WCAG 2.
 | `--espresso` | `#2A1A12` | Primary text, dark surfaces, footer |
 | `--roast` | `#4A2C1A` | Headings, primary buttons |
 | `--amber` (accent) | `#C8772E` | CTAs, links, highlights, focus |
-| `--amber-hover` | `#A85F20` | Hover/active for accent |
+| `--amber-hover` | `#9A5418` | Hover/active + body links on light (AA-safe, 5.0:1 on crema) |
+| `--amber-on-dark` | `#E09A55` | Small accent text on dark surfaces (5.4:1 on roast) |
 | `--crema` | `#F6EFE3` | Page background (warm parchment) |
 | `--oat` | `#EADFce` | Card/section background, borders |
 | `--cream` | `#FFFDF8` | Elevated surfaces / inputs |
@@ -25,7 +26,7 @@ Roast-inspired, warm neutrals with an amber accent. Contrast checked for WCAG 2.
 | `--error` | `#B3261E` | Form errors, out-of-stock |
 | `--focus-ring` | `#C8772E` | 2px focus outline everywhere |
 
-**Contrast notes:** ink `#1C1410` on crema `#F6EFE3` ≈ 13:1 ✓. amber `#C8772E` on crema ≈ 3.4:1 → use amber for large text/UI only; for body links darken to amber-hover `#A85F20` (≈ 4.7:1 ✓). White on roast `#4A2C1A` ≈ 9:1 ✓.
+**Contrast notes (axe-verified):** ink `#1C1410` on crema `#F6EFE3` ≈ 13:1 ✓. amber `#C8772E` on crema ≈ 3.4:1 → **large text / UI fills only**, never small body text. For small text/links on light use **amber-hover `#9A5418` (5.0:1 ✓)**; for small accent text on dark (roast/espresso) use **amber-on-dark `#E09A55` (5.4:1 ✓)** — plain `#C8772E` on roast is only 3.68:1 (fails AA). White on roast `#4A2C1A` ≈ 9:1 ✓. *(Tokens hardened after axe flagged 2 AA contrast fails on Home — fix by Bob, signed off by Cindy.)*
 
 ## Typography
 - **Display / headings:** **Fraunces** (warm, characterful serif) — weights 400/600/9pt optical. Google Fonts, self-host for perf.
@@ -66,14 +67,14 @@ Scale (rem, mobile → desktop fluid via clamp):
 ## Tailwind handoff (drop into `tailwind.config` / globals.css)
 ```css
 :root{
-  --espresso:#2A1A12; --roast:#4A2C1A; --amber:#C8772E; --amber-hover:#A85F20;
+  --espresso:#2A1A12; --roast:#4A2C1A; --amber:#C8772E; --amber-hover:#9A5418; --amber-on-dark:#E09A55;
   --crema:#F6EFE3; --oat:#EADFCE; --cream:#FFFDF8; --ink:#1C1410; --muted:#6B5A4C;
   --success:#2F7D4F; --error:#B3261E;
 }
 ```
 ```js
 // tailwind.config theme.extend.colors
-colors:{ espresso:'#2A1A12', roast:'#4A2C1A', amber:{DEFAULT:'#C8772E', hover:'#A85F20'},
+colors:{ espresso:'#2A1A12', roast:'#4A2C1A', amber:{DEFAULT:'#C8772E', hover:'#9A5418', 'on-dark':'#E09A55'},
   crema:'#F6EFE3', oat:'#EADFCE', cream:'#FFFDF8', ink:'#1C1410', muted:'#6B5A4C',
   success:'#2F7D4F', error:'#B3261E' }
 // fontFamily: { display:['Fraunces','serif'], sans:['Inter','system-ui','sans-serif'] }
