@@ -3,19 +3,22 @@ import { test, expect, Page } from '@playwright/test';
 /**
  * GOLDEN PATH — the revenue flow for Northwind Coffee Co.
  *   browse (/shop) → product detail → add to cart → cart → checkout → confirmation
- * Plus one checkout ERROR path.
+ * Plus checkout error paths (empty-submit validation + declined payment).
  *
- * Selectors come from tests/TESTIDS.md (the contract Bob builds to).
+ * Selectors: tests/TESTIDS.md (canonical v2, reconciled with Cindy's 04-testability.md).
+ * States asserted: Cindy's four checkout states.
  *
  * Guard: until the app exists, /shop 404s — these tests SKIP (not fail) so the
- * harness stays green on main. They auto-activate the moment Bob's routes land.
- * Force-run against a deploy:  BASE_URL=https://<preview> npm test shop-golden
+ * harness stays green on main. Auto-activate once Bob's routes land.
+ * Run against a deploy:  TEST_AGAINST_DEPLOY=1 BASE_URL=https://<preview> npm test shop-golden
  *
- * Test-safe submit: relies on NEXT_PUBLIC_TEST_MODE=1 (Bob) so checkout fires no
- * real payment/email and returns deterministic success/error.
+ * Test-safe submit (Bob): NEXT_PUBLIC_TEST_MODE=1 → mock handler, no real payment/email.
+ * Error sentinel (decided): declined card 4000000000000002, everything else valid.
  */
 
 const id = (testId: string) => `[data-testid="${testId}"]`;
+const GOOD_CARD = '4242424242424242';
+const DECLINED_CARD = '4000000000000002';
 
 // Skip the whole file if the shop route isn't up yet.
 test.beforeEach(async ({ page }) => {
@@ -28,76 +31,88 @@ test.beforeEach(async ({ page }) => {
 
 async function addFirstProductToCart(page: Page) {
   await expect(page.locator(id('shop-grid'))).toBeVisible();
-  const firstCard = page.locator(id('shop-card')).first();
+  const firstCard = page.locator(id('product-card')).first();
   await expect(firstCard).toBeVisible();
-  const productName = (await firstCard.locator(id('shop-card-name')).innerText()).trim();
+  const productName = (
+    await firstCard.locator(id('product-card-name')).innerText()
+  ).trim();
 
-  await firstCard.locator(id('shop-card-link')).click();
+  // Open the PDP by clicking the card.
+  await firstCard.click();
 
-  // PDP
-  await expect(page.locator(id('pdp-name'))).toContainText(productName);
+  await expect(page.locator(id('pdp-title'))).toContainText(productName);
   await page.locator(id('pdp-add-to-cart')).click();
-  await expect(page.locator(id('pdp-added-toast'))).toBeVisible();
+  await expect(page.locator(id('pdp-add-toast'))).toBeVisible();
 
   return productName;
+}
+
+async function fillValidCheckoutExceptCard(page: Page, card: string) {
+  await page.locator(id('checkout-email')).fill('shopper@test.com');
+  await page.locator(id('checkout-name')).fill('Test Shopper');
+  await page.locator(id('checkout-address1')).fill('1 Roastery Way');
+  await page.locator(id('checkout-city')).fill('Beanton');
+  await page.locator(id('checkout-postcode')).fill('BN1 2CD');
+  // country/region may be selects with sensible defaults; fill if present.
+  await page.locator(id('checkout-card-number')).fill(card);
+  await page.locator(id('checkout-card-expiry')).fill('12/30');
+  await page.locator(id('checkout-card-cvc')).fill('123');
 }
 
 test.describe('golden path: browse → cart → checkout', () => {
   test('happy path: add to cart and complete checkout', async ({ page }) => {
     const productName = await addFirstProductToCart(page);
 
-    // Cart badge reflects the add
     await expect(page.locator(id('nav-cart-count'))).toHaveText(/[1-9]/);
 
-    // Go to cart, verify the line item
-    await page.locator(id('nav-cart')).click();
-    await expect(page.locator(id('cart-line-name')).first()).toContainText(productName);
-    await expect(page.locator(id('cart-subtotal'))).toBeVisible();
+    await page.locator(id('nav-cart-button')).click();
+    await expect(page.locator(id('cart-line')).first()).toContainText(productName);
+    await expect(page.locator(id('cart-total'))).toBeVisible();
 
-    // Proceed to checkout
-    await page.locator(id('cart-checkout-cta')).click();
+    await page.locator(id('cart-checkout-button')).click();
     await expect(page.locator(id('checkout-form'))).toBeVisible();
 
-    // Fill the form (test-safe mode → no real payment/email)
-    await page.locator(id('checkout-email')).fill('shopper@test.com');
-    await page.locator(id('checkout-name')).fill('Test Shopper');
-    await page.locator(id('checkout-address')).fill('1 Roastery Way, Beanton');
-    await page.locator(id('checkout-card')).fill('4242424242424242');
-    await page.locator(id('checkout-submit')).click();
+    await fillValidCheckoutExceptCard(page, GOOD_CARD);
+    await page.locator(id('checkout-place-order')).click();
 
     // Confirmation
     await expect(page).toHaveURL(/\/checkout\/success/);
-    await expect(page.locator(id('confirmation-heading'))).toBeVisible();
-    await expect(page.locator(id('confirmation-order-id'))).not.toBeEmpty();
+    await expect(page.locator(id('confirm-banner'))).toBeVisible();
+    // Order ref format per Cindy's spec: NW-<digits>
+    await expect(page.locator(id('confirm-order-number'))).toHaveText(/^NW-\d{4,}/);
+    // Cart cleared after successful order (Cindy state #3)
+    await expect(page.locator(id('nav-cart-count'))).toHaveText(/^0?$/);
   });
 
-  test('validation: empty checkout submit shows field errors', async ({ page }) => {
+  test('validation: empty checkout submit shows field errors (state #1)', async ({
+    page,
+  }) => {
     await addFirstProductToCart(page);
-    await page.locator(id('nav-cart')).click();
-    await page.locator(id('cart-checkout-cta')).click();
+    await page.locator(id('nav-cart-button')).click();
+    await page.locator(id('cart-checkout-button')).click();
     await expect(page.locator(id('checkout-form'))).toBeVisible();
 
-    // Submit empty → expect an error summary and at least the email field error
-    await page.locator(id('checkout-submit')).click();
-    await expect(page.locator(id('checkout-error-summary'))).toBeVisible();
+    await page.locator(id('checkout-place-order')).click();
+    await expect(page.locator(id('checkout-form-error'))).toBeVisible();
     await expect(page.locator(id('checkout-error-email'))).toBeVisible();
-    // Must NOT have navigated to success
     await expect(page).not.toHaveURL(/\/checkout\/success/);
   });
 
-  test('error path: declined payment surfaces an error (sentinel email)', async ({ page }) => {
+  test('error path: declined card surfaces an error, no navigation (state #4)', async ({
+    page,
+  }) => {
     await addFirstProductToCart(page);
-    await page.locator(id('nav-cart')).click();
-    await page.locator(id('cart-checkout-cta')).click();
+    await page.locator(id('nav-cart-button')).click();
+    await page.locator(id('cart-checkout-button')).click();
 
-    // Sentinel email forces the mock handler to return a decline (confirm value w/ Bob)
-    await page.locator(id('checkout-email')).fill('fail@test.com');
-    await page.locator(id('checkout-name')).fill('Test Shopper');
-    await page.locator(id('checkout-address')).fill('1 Roastery Way, Beanton');
-    await page.locator(id('checkout-card')).fill('4000000000000002');
-    await page.locator(id('checkout-submit')).click();
+    await fillValidCheckoutExceptCard(page, DECLINED_CARD);
+    await page.locator(id('checkout-place-order')).click();
 
-    await expect(page.locator(id('checkout-error-summary'))).toBeVisible();
+    const banner = page.locator(id('checkout-form-error'));
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveText(/declined/i);
     await expect(page).not.toHaveURL(/\/checkout\/success/);
+    // Values retained (Cindy state #4)
+    await expect(page.locator(id('checkout-email'))).toHaveValue('shopper@test.com');
   });
 });
